@@ -115,11 +115,6 @@ public class WebServiceClass {
 
 		for (int j = startTime; j < endTime; j++) {
 
-			if ((localDateTime.getDayOfWeek() == DayOfWeek.TUESDAY && j == 14)
-					|| (localDateTime.getDayOfWeek() == DayOfWeek.THURSDAY && j == 14)) {
-				continue;
-			}
-
 			for (String minutes : minutesHours) {
 				timeslots += j + ":" + minutes + "h" + "\t";
 			}
