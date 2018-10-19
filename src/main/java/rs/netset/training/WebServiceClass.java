@@ -16,8 +16,10 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import javax.validation.constraints.NotNull;
 
+import constants.Constants;
 import rs.netset.training.domain.Appointment;
 import rs.netset.training.domain.Person;
+import rs.netset.training.util.SettingsLoader;
 
 @WebService
 @Stateless
@@ -25,15 +27,18 @@ public class WebServiceClass {
 
 	@EJB
 	ServiceBean serviceBean;
-	ValidatorFactory validationFactory;
-	Validator validator;
-	Set<ConstraintViolation<Person>> violationsPerson;
-	Set<ConstraintViolation<Appointment>> violationsAppointments;
+	private ValidatorFactory validationFactory;
+	private Validator validator;
+	private Set<ConstraintViolation<Person>> violationsPerson;
+	private Set<ConstraintViolation<Appointment>> violationsAppointments;
+	private int startTime;
+	private int endTime;
 
 	@PostConstruct
 	private void init() {
 		validationFactory = Validation.buildDefaultValidatorFactory();
 		validator = validationFactory.getValidator();
+
 	}
 
 	@WebMethod
@@ -86,8 +91,13 @@ public class WebServiceClass {
 
 	@WebMethod
 	public String getAllAvailableTimeSlots(String date) {
+
 		String timeslots = "";
 		LocalDateTime localDateTime = makeAndVerifyDate(date);
+
+		if (!loadStartAndEndTime()) {
+			return "Server error. System could not read properties file.";
+		}
 
 		if (localDateTime == null) {
 			return "Bad request. Please provide date in this format yyyy/MM/dd";
@@ -103,7 +113,7 @@ public class WebServiceClass {
 
 		String[] minutesHours = { "00", "15", "30", "45" };
 
-		for (int j = 8; j < 20; j++) {
+		for (int j = startTime; j < endTime; j++) {
 
 			if ((localDateTime.getDayOfWeek() == DayOfWeek.TUESDAY && j == 14)
 					|| (localDateTime.getDayOfWeek() == DayOfWeek.THURSDAY && j == 14)) {
@@ -125,9 +135,13 @@ public class WebServiceClass {
 	}
 
 	private boolean checkTimeOfAppointment(LocalDateTime localDateTime) {
-		if (localDateTime.getYear() >= LocalDateTime.now().getYear()) {
+		if (localDateTime.getYear() > LocalDateTime.now().getYear()) {
+			return true;
+		} else if (localDateTime.getYear() == LocalDateTime.now().getYear()) {
 
-			if (localDateTime.getMonthValue() >= LocalDateTime.now().getMonthValue()) {
+			if (localDateTime.getMonthValue() > LocalDateTime.now().getMonthValue()) {
+				return true;
+			} else if (localDateTime.getMonthValue() == LocalDateTime.now().getMonthValue()) {
 
 				if (localDateTime.getDayOfMonth() > LocalDateTime.now().getDayOfMonth()) {
 					return true;
@@ -183,6 +197,16 @@ public class WebServiceClass {
 			return localDateTime;
 		} catch (Exception ex) {
 			return null;
+		}
+	}
+
+	private boolean loadStartAndEndTime() {
+		try {
+			startTime = Integer.parseInt(SettingsLoader.getInstance().getValue(Constants.START_WORK));
+			endTime = Integer.parseInt(SettingsLoader.getInstance().getValue(Constants.END_WORK));
+			return true;
+		} catch (Exception ex) {
+			return false;
 		}
 	}
 

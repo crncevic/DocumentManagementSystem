@@ -1,4 +1,6 @@
 rs\netset\training\domain\Appointment.class
+rs\netset\training\util\SettingsLoader.class
 rs\netset\training\WebServiceClass.class
+constants\Constants.class
 rs\netset\training\domain\Person.class
 rs\netset\training\ServiceBean.class
