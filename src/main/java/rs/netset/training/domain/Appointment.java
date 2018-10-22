@@ -1,5 +1,6 @@
 package rs.netset.training.domain;
 
+import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDateTime;
@@ -7,7 +8,7 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 
-public class Appointment {
+public class Appointment implements Serializable {
 
 	@NotNull(message = "Person for appointment is mandatory")
 	private Person person;

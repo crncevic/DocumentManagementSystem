@@ -1,9 +1,11 @@
 package rs.netset.training.domain;
 
+import java.io.Serializable;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-public class Person {
+public class Person implements Serializable{
 
 	@NotNull(message = "Unique number for person is mandatory")
 	@Size(min = 13, max = 13, message = "Unique number must have 13 digits")

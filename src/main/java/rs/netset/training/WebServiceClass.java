@@ -65,7 +65,7 @@ public class WebServiceClass {
 		violationsAppointments = validator.validate(appointment);
 
 		if (violationsPerson.size() > 0) {
-			messageError = "Bad request. There is errors in your request for informations about yourself:";
+			messageError = "Bad request. There are errors in your request for informations about yourself:";
 			int i = 1;
 			for (ConstraintViolation<Person> constraintViolation : violationsPerson) {
 				messageError += "\n " + (i++) + ". " + constraintViolation.getMessage();
@@ -73,7 +73,7 @@ public class WebServiceClass {
 		}
 
 		if (violationsAppointments.size() > 0) {
-			messageError += "\n Bad request. There is errors in your request for informations about your appointment:";
+			messageError += "\n Bad request. There are errors in your request for informations about your appointment:";
 			int i = 1;
 			for (ConstraintViolation<Appointment> constraintViolation : violationsAppointments) {
 				messageError += "\n " + (i++) + ". " + constraintViolation.getMessage();
@@ -100,7 +100,7 @@ public class WebServiceClass {
 		}
 
 		if (localDateTime == null) {
-			return "Bad request. Please provide date in this format yyyy/MM/dd";
+			return "Bad request. Please provide date in this format yyyy/MM/dd. Make sure that yyyy, MM,dd are positive numbers!";
 		}
 
 		if (!checkTimeOfAppointment(localDateTime)) {
@@ -121,12 +121,6 @@ public class WebServiceClass {
 		}
 
 		return timeslots;
-	}
-
-	private boolean checkifItIsSameDay(LocalDateTime localDateTime) {
-		return (localDateTime.getYear() == LocalDateTime.now().getYear()
-				&& localDateTime.getMonthValue() == LocalDateTime.now().getMonthValue()
-				&& localDateTime.getDayOfMonth() == LocalDateTime.now().getDayOfMonth());
 	}
 
 	private boolean checkTimeOfAppointment(LocalDateTime localDateTime) {
@@ -152,6 +146,10 @@ public class WebServiceClass {
 			String[] array = date.split("/");
 
 			if (array.length != 3) {
+				return null;
+			}
+
+			if (Integer.parseInt(array[0]) <= 0 || Integer.parseInt(array[1]) <= 0 || Integer.parseInt(array[2]) <= 0) {
 				return null;
 			}
 
