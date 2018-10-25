@@ -11,6 +11,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
@@ -18,10 +20,13 @@ import javax.validation.constraints.Size;
 
 @Entity
 @Table(name = "appointment")
+@NamedQueries({
+		@NamedQuery(name = "Appointment.getByUniqueNumber", query = "SELECT a FROM Appointment a WHERE a.uniqueNumber=:uniqueNumber")
+})
 public class Appointment implements Serializable {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private int id;
 

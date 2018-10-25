@@ -1,5 +1,6 @@
 package rs.netset.training.logic;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -10,6 +11,7 @@ import javax.jws.WebMethod;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceUnit;
+import javax.persistence.TypedQuery;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
@@ -27,8 +29,7 @@ public class AppointmentLogic {
 
 	// @EJB
 	// ServiceBean serviceBean;
-	
-	
+
 	@PersistenceContext
 	EntityManager em;
 	private ValidatorFactory validationFactory;
@@ -60,11 +61,27 @@ public class AppointmentLogic {
 		if (violationsAppointments.size() > 0) {
 			throw new ConstraintViolationException(violationsAppointments);
 		}
-        
+
+		if (getAppointmentByJMBG(appointment.getUniqueNumber()) != null) {
+			throw new NetSetException("Appointment for you already exists", null, ErrorCode.USER_ERROR);
+		}
+
 		em.persist(appointment);
-		
+
 		return appointment;
 
+	}
+
+	private Appointment getAppointmentByJMBG(String uniqueNumber) {
+		TypedQuery<Appointment> query = em.createNamedQuery(Constants.APPOINTMENT_FIND_BY_JMBG, Appointment.class);
+		query.setParameter(Constants.UNIQUE_NUMBER, uniqueNumber);
+		List<Appointment> list = query.getResultList();
+
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+
+		return list.get(0);
 	}
 
 	@WebMethod
