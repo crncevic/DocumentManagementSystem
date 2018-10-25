@@ -1,23 +1,22 @@
 package rs.netset.training.logic;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.jws.WebMethod;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceUnit;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
-import javax.validation.constraints.NotNull;
 
 import constants.Constants;
-import rs.netset.training.ServiceBean;
 import rs.netset.training.domain.Appointment;
 import rs.netset.training.exception.ErrorCode;
 import rs.netset.training.exception.NetSetException;
@@ -28,7 +27,10 @@ public class AppointmentLogic {
 
 	// @EJB
 	// ServiceBean serviceBean;
-
+	
+	
+	@PersistenceContext
+	EntityManager em;
 	private ValidatorFactory validationFactory;
 	private Validator validator;
 	private Set<ConstraintViolation<Appointment>> violationsAppointments;
@@ -39,9 +41,9 @@ public class AppointmentLogic {
 	private void init() {
 		validationFactory = Validation.buildDefaultValidatorFactory();
 		validator = validationFactory.getValidator();
-
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public Appointment registerAppointment(Appointment appointment) {
 
 		if (appointment.getDateTime().getMinute() != 0 && appointment.getDateTime().getMinute() != 15
@@ -58,7 +60,9 @@ public class AppointmentLogic {
 		if (violationsAppointments.size() > 0) {
 			throw new ConstraintViolationException(violationsAppointments);
 		}
-
+        
+		em.persist(appointment);
+		
 		return appointment;
 
 	}
@@ -66,42 +70,37 @@ public class AppointmentLogic {
 	@WebMethod
 	public String getAllAvailableTimeSlots(String date) {
 
-		/* String timeslots = "";
-		LocalDateTime localDateTime = makeAndVerifyDate(date);
+		/*
+		 * String timeslots = ""; LocalDateTime localDateTime = makeAndVerifyDate(date);
+		 * 
+		 * if (!loadStartAndEndTime()) { return
+		 * "Server error. System could not read properties file."; }
+		 * 
+		 * if (localDateTime == null) { return
+		 * "Bad request. Please provide date in this format yyyy/MM/dd. Make sure that yyyy, MM,dd are positive numbers!"
+		 * ; }
+		 * 
+		 * if (!checkTimeOfAppointment(localDateTime)) { return
+		 * "Bad request. Please provide date that is in the future!"; }
+		 * 
+		 * timeslots = "\n AVAILABLE TIMESLOTS FOR " +
+		 * localDateTime.getDayOfWeek().toString() + " " + localDateTime.getDayOfMonth()
+		 * + "." + localDateTime.getMonthValue() + "." + localDateTime.getYear() +
+		 * " \n";
+		 * 
+		 * String[] minutesHours = { "00", "15", "30", "45" };
+		 * 
+		 * for (int j = startTime; j < endTime; j++) {
+		 * 
+		 * for (String minutes : minutesHours) { timeslots += j + ":" + minutes + "h" +
+		 * "\t"; } }
+		 * 
+		 * return timeslots;
+		 */
 
-		if (!loadStartAndEndTime()) {
-			return "Server error. System could not read properties file.";
-		}
-
-		if (localDateTime == null) {
-			return "Bad request. Please provide date in this format yyyy/MM/dd. Make sure that yyyy, MM,dd are positive numbers!";
-		}
-
-		if (!checkTimeOfAppointment(localDateTime)) {
-			return "Bad request. Please provide date that is in the future!";
-		}
-
-		timeslots = "\n AVAILABLE TIMESLOTS FOR " + localDateTime.getDayOfWeek().toString() + " "
-				+ localDateTime.getDayOfMonth() + "." + localDateTime.getMonthValue() + "." + localDateTime.getYear()
-				+ " \n";
-
-		String[] minutesHours = { "00", "15", "30", "45" };
-
-		for (int j = startTime; j < endTime; j++) {
-
-			for (String minutes : minutesHours) {
-				timeslots += j + ":" + minutes + "h" + "\t";
-			}
-		}
-
-		return timeslots;
-		*/
-		
 		return "";
 	}
 
-	
-	
 	private boolean checkUniqueNumber(String uniqueNumber) {
 		try {
 			Long.parseLong(uniqueNumber);
