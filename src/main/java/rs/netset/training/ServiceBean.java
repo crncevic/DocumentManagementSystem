@@ -18,11 +18,12 @@ public class ServiceBean {
 	private Logger log = LoggerFactory.getLogger(ServiceBean.class);
 
 	public void createAppointment(Appointment appointment) {
-		
-		log.info("Person with name " + appointment.getPerson().getFirstName() + " "
-				+ appointment.getPerson().getLastName() + "(unique number - "
-				+ appointment.getPerson().getUniqueNumber() + ") created appointment at " + LocalDateTime.now()
-				+ " for date: " + appointment.getDateTime().toString());
-	}
 
+		/*
+		 * log.info("Person with name " + appointment.getPerson().getFirstName() + " " +
+		 * appointment.getPerson().getLastName() + "(unique number - " +
+		 * appointment.getPerson().getUniqueNumber() + ") created appointment at " +
+		 * LocalDateTime.now() + " for date: " + appointment.getDateTime().toString());
+		 */
+	}
 }
