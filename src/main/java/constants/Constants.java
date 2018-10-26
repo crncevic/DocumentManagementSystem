@@ -7,6 +7,7 @@ public class Constants {
 	//Named queries
 	
 	public static final String APPOINTMENT_FIND_BY_JMBG="Appointment.getByUniqueNumber";
+	public static final String APPOINTMENT_FIND_ALL="Appointment.getAll";
 	
 	//Parameters for named queries
 	

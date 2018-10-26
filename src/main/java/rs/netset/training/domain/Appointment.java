@@ -21,7 +21,9 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "appointment")
 @NamedQueries({
-		@NamedQuery(name = "Appointment.getByUniqueNumber", query = "SELECT a FROM Appointment a WHERE a.uniqueNumber=:uniqueNumber")
+		@NamedQuery(name = "Appointment.getByUniqueNumber", query = "SELECT a FROM Appointment a WHERE a.uniqueNumber=:uniqueNumber"),
+		@NamedQuery(name = "Appointment.getAll", query = "SELECT a FROM Appointment a"),
+		
 })
 public class Appointment implements Serializable {
 

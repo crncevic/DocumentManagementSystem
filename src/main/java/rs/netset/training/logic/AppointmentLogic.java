@@ -1,5 +1,10 @@
 package rs.netset.training.logic;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +22,8 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+
+import org.hibernate.validator.internal.xml.LocalNamespace;
 
 import constants.Constants;
 import rs.netset.training.domain.Appointment;
@@ -42,13 +49,19 @@ public class AppointmentLogic {
 	private void init() {
 		validationFactory = Validation.buildDefaultValidatorFactory();
 		validator = validationFactory.getValidator();
+		loadStartAndEndTime();
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
-	public Appointment registerAppointment(Appointment appointment) {
+	public synchronized Appointment registerAppointment(Appointment appointment) {
 
-		if (appointment.getDateTime().getMinute() != 0 && appointment.getDateTime().getMinute() != 15
-				&& appointment.getDateTime().getMinute() != 30 && appointment.getDateTime().getMinute() != 45) {
+		if (checkForHardwareMaintanance()) {
+			throw new NetSetException(
+					"Service for appointments have hardvare maintenece every tuesday and thursday from 14 to 15 hours.",
+					null, ErrorCode.SERVER_ERROR);
+		}
+
+		if (!isValidLocalDateTime(appointment.getDateTime())) {
 			throw new NetSetException("Appointment time is not valid", null, ErrorCode.USER_ERROR);
 		}
 
@@ -59,7 +72,8 @@ public class AppointmentLogic {
 		violationsAppointments = validator.validate(appointment);
 
 		if (violationsAppointments.size() > 0) {
-			throw new ConstraintViolationException(violationsAppointments);
+			throw new NetSetException("Error in informations about appointment",
+					new ConstraintViolationException(violationsAppointments), ErrorCode.USER_ERROR);
 		}
 
 		if (getAppointmentByJMBG(appointment.getUniqueNumber()) != null) {
@@ -70,6 +84,24 @@ public class AppointmentLogic {
 
 		return appointment;
 
+	}
+
+	private boolean isValidLocalDateTime(LocalDateTime dateTime) {
+
+		if (dateTime.getMinute() != 0 && dateTime.getMinute() != 15 && dateTime.getMinute() != 30
+				&& dateTime.getMinute() != 45) {
+			return false;
+		}
+		return true;
+
+	}
+
+	private boolean checkForHardwareMaintanance() {
+		if ((LocalDateTime.now().getDayOfWeek() == DayOfWeek.TUESDAY && LocalDateTime.now().getHour() == 14)
+				|| (LocalDateTime.now().getDayOfWeek() == DayOfWeek.THURSDAY && LocalDateTime.now().getHour() == 14)) {
+			return true;
+		}
+		return false;
 	}
 
 	private Appointment getAppointmentByJMBG(String uniqueNumber) {
@@ -85,37 +117,54 @@ public class AppointmentLogic {
 	}
 
 	@WebMethod
-	public String getAllAvailableTimeSlots(String date) {
+	public List<LocalDateTime> getAllAvailableTimeSlots(LocalDate dateTime) {
+		
+		if(dateTime.isBefore(LocalDate.now())) {
+			throw new NetSetException("Date that you provide is in the past!", null, ErrorCode.USER_ERROR);
+		}
+		
+		List<LocalDateTime> allAvailableTimeslots = new ArrayList<>();
+		List<Appointment> allAppointments = getAllApointments();
+		List<Appointment> specificAppointemnts = new ArrayList<>();
 
-		/*
-		 * String timeslots = ""; LocalDateTime localDateTime = makeAndVerifyDate(date);
-		 * 
-		 * if (!loadStartAndEndTime()) { return
-		 * "Server error. System could not read properties file."; }
-		 * 
-		 * if (localDateTime == null) { return
-		 * "Bad request. Please provide date in this format yyyy/MM/dd. Make sure that yyyy, MM,dd are positive numbers!"
-		 * ; }
-		 * 
-		 * if (!checkTimeOfAppointment(localDateTime)) { return
-		 * "Bad request. Please provide date that is in the future!"; }
-		 * 
-		 * timeslots = "\n AVAILABLE TIMESLOTS FOR " +
-		 * localDateTime.getDayOfWeek().toString() + " " + localDateTime.getDayOfMonth()
-		 * + "." + localDateTime.getMonthValue() + "." + localDateTime.getYear() +
-		 * " \n";
-		 * 
-		 * String[] minutesHours = { "00", "15", "30", "45" };
-		 * 
-		 * for (int j = startTime; j < endTime; j++) {
-		 * 
-		 * for (String minutes : minutesHours) { timeslots += j + ":" + minutes + "h" +
-		 * "\t"; } }
-		 * 
-		 * return timeslots;
-		 */
+		// TODO: Uraditi Bolje
+		for (Appointment appointment : allAppointments) {
+			if (appointment.getDateTime().getYear() == dateTime.getYear()
+					&& appointment.getDateTime().getMonthValue() == dateTime.getMonthValue()
+					&& appointment.getDateTime().getDayOfMonth() == dateTime.getDayOfMonth()) {
+				specificAppointemnts.add(appointment);
+			}
+		}
 
-		return "";
+		LocalDateTime ldt = LocalDateTime.of(dateTime.getYear(), dateTime.getMonth(), dateTime.getDayOfMonth(),
+				startTime, 0);
+
+		LocalDateTime limit = LocalDateTime.of(dateTime.getYear(), dateTime.getMonth(), dateTime.getDayOfMonth(),
+				endTime, 0);
+
+		while (ldt.isBefore(limit)) {
+			boolean signal = false;
+			for (Appointment appointment : specificAppointemnts) {
+				if (ldt.equals(appointment.getDateTime())) {
+					signal = true;
+					break;
+				}
+			}
+
+			if (!signal) {
+				allAvailableTimeslots.add(ldt);
+			}
+
+			ldt = ldt.plusMinutes(15);
+		}
+
+		return allAvailableTimeslots;
+
+	}
+
+	public List<Appointment> getAllApointments() {
+		TypedQuery<Appointment> query = em.createNamedQuery(Constants.APPOINTMENT_FIND_ALL, Appointment.class);
+		return query.getResultList();
 	}
 
 	private boolean checkUniqueNumber(String uniqueNumber) {
