@@ -1,6 +1,7 @@
 rs\netset\training\domain\Appointment.class
 rs\netset\training\exception\ErrorCode.class
 rs\netset\training\util\SettingsLoader.class
+rs\netset\training\db\GenericRepository.class
 rs\netset\training\exception\NetSetException.class
 rs\netset\training\domain\package-info.class
 rs\netset\training\WebServiceClass.class

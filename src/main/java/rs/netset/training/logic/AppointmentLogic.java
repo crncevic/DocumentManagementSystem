@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -26,6 +27,7 @@ import javax.validation.ValidatorFactory;
 import org.hibernate.validator.internal.xml.LocalNamespace;
 
 import constants.Constants;
+import rs.netset.training.db.GenericRepository;
 import rs.netset.training.domain.Appointment;
 import rs.netset.training.exception.ErrorCode;
 import rs.netset.training.exception.NetSetException;
@@ -34,11 +36,10 @@ import rs.netset.training.util.SettingsLoader;
 @Stateless
 public class AppointmentLogic {
 
-	// @EJB
-	// ServiceBean serviceBean;
-
 	@PersistenceContext
-	EntityManager em;
+	private EntityManager em;
+	
+	private GenericRepository<Appointment> gra;
 	private ValidatorFactory validationFactory;
 	private Validator validator;
 	private Set<ConstraintViolation<Appointment>> violationsAppointments;
@@ -50,6 +51,7 @@ public class AppointmentLogic {
 		validationFactory = Validation.buildDefaultValidatorFactory();
 		validator = validationFactory.getValidator();
 		loadStartAndEndTime();
+		gra = new GenericRepository<>(Appointment.class,em);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -80,7 +82,7 @@ public class AppointmentLogic {
 			throw new NetSetException("Appointment for you already exists", null, ErrorCode.USER_ERROR);
 		}
 
-		em.persist(appointment);
+		gra.save(appointment);
 
 		return appointment;
 
@@ -105,24 +107,17 @@ public class AppointmentLogic {
 	}
 
 	private Appointment getAppointmentByJMBG(String uniqueNumber) {
-		TypedQuery<Appointment> query = em.createNamedQuery(Constants.APPOINTMENT_FIND_BY_JMBG, Appointment.class);
-		query.setParameter(Constants.UNIQUE_NUMBER, uniqueNumber);
-		List<Appointment> list = query.getResultList();
-
-		if (list == null || list.isEmpty()) {
-			return null;
-		}
-
-		return list.get(0);
+		return gra.getSingleByParamFromNamedQuery(new Object[] { uniqueNumber },
+				new String[] { Constants.UNIQUE_NUMBER }, Constants.APPOINTMENT_FIND_BY_JMBG);
 	}
 
 	@WebMethod
 	public List<LocalDateTime> getAllAvailableTimeSlots(LocalDate dateTime) {
-		
-		if(dateTime.isBefore(LocalDate.now())) {
+
+		if (dateTime.isBefore(LocalDate.now())) {
 			throw new NetSetException("Date that you provide is in the past!", null, ErrorCode.USER_ERROR);
 		}
-		
+
 		List<LocalDateTime> allAvailableTimeslots = new ArrayList<>();
 		List<Appointment> allAppointments = getAllApointments();
 		List<Appointment> specificAppointemnts = new ArrayList<>();
@@ -163,8 +158,7 @@ public class AppointmentLogic {
 	}
 
 	public List<Appointment> getAllApointments() {
-		TypedQuery<Appointment> query = em.createNamedQuery(Constants.APPOINTMENT_FIND_ALL, Appointment.class);
-		return query.getResultList();
+		return gra.getAll(Constants.APPOINTMENT_FIND_ALL);
 	}
 
 	private boolean checkUniqueNumber(String uniqueNumber) {

@@ -30,18 +30,17 @@ public class WebServiceClass {
 		} catch (NetSetException nse) {
 			throw nse;
 		} catch (Exception e) {
-			throw new NetSetException("Server error" + e.getMessage(), e, ErrorCode.SERVER_ERROR);
+			throw new NetSetException("Server error " + e.getMessage(), e, ErrorCode.SERVER_ERROR);
 		}
 	}
 
 	public List<LocalDateTime> getAllAvailableTimeSlots(@NotNull LocalDate dateTime) {
 		try {
 			return appointmentLogic.getAllAvailableTimeSlots(dateTime);
-
 		} catch (NetSetException nse) {
 			throw nse;
 		} catch (Exception e) {
-			throw new NetSetException("Server error" + e.getMessage(), e, ErrorCode.SERVER_ERROR);
+			throw new NetSetException("Server error " + e.getMessage(), e, ErrorCode.SERVER_ERROR);
 		}
 	}
 }
